@@ -12,9 +12,6 @@ cleanup_cache() {
 
 load_previous_npm_node_versions() {
   if [ -f $cache_dir/npm-version ]; then
-    old_npm=$(<$cache_dir/npm-version)
-  fi
-  if [ -f $cache_dir/npm-version ]; then
     old_node=$(<$cache_dir/node-version)
   fi
 }
@@ -48,12 +45,6 @@ cleanup_old_node() {
     info "Cleaning up old Node $old_node and old dependencies in cache"
     rm $old_node_dir
     rm -rf $cache_dir/node_modules
-
-    local bower_components_dir=$cache_dir/bower_components
-
-    if [ -d $bower_components_dir ]; then
-      rm -rf $bower_components_dir
-    fi
   fi
 }
 
@@ -72,17 +63,6 @@ install_node() {
     mv /tmp/node-v$node_version-linux-x64/* $node_dir
     chmod +x $node_dir/bin/*
     PATH=$node_dir/bin:$PATH
-  fi
-}
-
-install_npm() {
-  # Optionally bootstrap a different npm version
-  if [ ! $npm_version ] || [[ `npm --version` == "$npm_version" ]]; then
-    info "Using default npm version"
-  else
-    info "Downloading and installing npm $npm_version (replacing version `npm --version`)..."
-    cd $build_dir
-    npm install --unsafe-perm --quiet -g npm@$npm_version 2>&1 >/dev/null | indent
   fi
 }
 
@@ -116,21 +96,10 @@ install_and_cache_deps() {
     cp -r $cache_dir/node_modules/* node_modules/
   fi
 
-  if [ -f "$assets_dir/yarn.lock" ]; then
-    install_yarn_deps
-  else
-    install_npm_deps
-  fi
+  install_yarn_deps
 
   cp -r node_modules $cache_dir
   PATH=$assets_dir/node_modules/.bin:$PATH
-}
-
-install_npm_deps() {
-  npm prune | indent
-  npm install --quiet --unsafe-perm --userconfig $build_dir/npmrc 2>&1 | indent
-  npm rebuild 2>&1 | indent
-  npm --unsafe-perm prune 2>&1 | indent
 }
 
 install_yarn_deps() {
@@ -140,7 +109,7 @@ install_yarn_deps() {
 cache_versions() {
   info "Caching versions for future builds"
   echo `node --version` > $cache_dir/node-version
-  echo `npm --version` > $cache_dir/npm-version
+  echo `yarn --version` > $cache_dir/yarn-version
 }
 
 finalize_node() {
