@@ -124,7 +124,6 @@ install_and_cache_deps() {
 
   cp -r node_modules $cache_dir
   PATH=$assets_dir/node_modules/.bin:$PATH
-  install_bower_deps
 }
 
 install_npm_deps() {
@@ -136,62 +135,6 @@ install_npm_deps() {
 
 install_yarn_deps() {
   yarn install --cache-folder $cache_dir/yarn-cache --pure-lockfile 2>&1
-}
-
-install_bower_deps() {
-  cd $assets_dir
-  local bower_json=bower.json
-
-  if [ -f $bower_json ]; then
-    info "Installing and caching bower components"
-
-    if [ -d $cache_dir/bower_components ]; then
-      mkdir -p bower_components
-      cp -r $cache_dir/bower_components/* bower_components/
-    fi
-    bower install
-    cp -r bower_components $cache_dir
-  fi
-}
-
-compile() {
-  cd $phoenix_dir
-  PATH=$build_dir/.platform_tools/erlang/bin:$PATH
-  PATH=$build_dir/.platform_tools/elixir/bin:$PATH
-
-  run_compile
-}
-
-run_compile() {
-  local custom_compile="${build_dir}/${compile}"
-
-  cd $phoenix_dir
-
-  has_clean=$(mix help "${phoenix_ex}.digest.clean" 1>/dev/null 2>&1; echo $?)
-
-  if [ $has_clean = 0 ]; then
-    mkdir -p $cache_dir/phoenix-static
-    info "Restoring cached assets"
-    mkdir -p priv
-    rsync -a -v --ignore-existing $cache_dir/phoenix-static/ priv/static
-  fi
-
-  cd $assets_dir
-
-  if [ -f $custom_compile ]; then
-    info "Running custom compile"
-    source $custom_compile 2>&1 | indent
-  else
-    info "Running default compile"
-    source ${build_pack_dir}/${compile} 2>&1 | indent
-  fi
-
-  cd $phoenix_dir
-
-  if [ $has_clean = 0 ]; then
-    info "Caching assets"
-    rsync -a --delete -v priv/static/ $cache_dir/phoenix-static
-  fi
 }
 
 cache_versions() {

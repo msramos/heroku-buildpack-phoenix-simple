@@ -40,10 +40,8 @@ if [ -f "$assets_dir/yarn.lock" ]; then
   install_yarn "$heroku_dir/yarn"
 fi
 
-head "Building dependencies"
+head "Installing dependencies"
 install_and_cache_deps
-
-compile
 
 head "Finalizing build"
 cache_versions
